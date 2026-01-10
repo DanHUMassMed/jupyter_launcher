@@ -13,12 +13,116 @@ WARNING_FILE="WARNING.md"
 DEFAULT_PY_VERSION="3.13"
 LOG_FILE="log.txt"  # optional: if set, logs are written here
 
+REPO_OWNER="DanHUMassMed"
+REPO_NAME="jupyter_launcher"
+REPO_PATH="${REPO_OWNER}/${REPO_NAME}"
+
+GITHUB_API_URL="https://api.github.com/repos/${REPO_PATH}"
+RAW_BASE_URL="https://raw.githubusercontent.com/${REPO_PATH}"
+
+BRANCH="main"
+RUN_FILE="launch_jupyter.command"
+
+# Set WANT_LOCAL_RUNTIME=1 at top of script to enable.
+WANT_LOCAL_RUNTIME=${WANT_LOCAL_RUNTIME:-1}
+
+
+# --------------------------------------------------
+# Check if curl is installed; returns 1 if missing
+# --------------------------------------------------
+require_curl() {
+    if ! command -v curl >/dev/null 2>&1; then
+        log "⚠️ curl is not installed — skipping update"
+        return 1
+    fi
+    return 0
+}
+
+# --------------------------------------------------
+# Fetch the latest GitHub tag from the repository
+# --------------------------------------------------
+get_latest_github_tag() {
+    curl -fs "${GITHUB_API_URL}/tags" \
+    | sed -n 's/.*"name":[[:space:]]*"\([^"]*\)".*/\1/p' \
+    | head -n 1 || true
+}
+
+# --------------------------------------------------
+# Show a macOS dialog asking user whether to install update
+# Returns button clicked
+# --------------------------------------------------
+mac_confirm_update() {
+    osascript <<EOF
+display dialog "Launch Jupyter App Update Available. Install?" buttons {"Cancel", "Install"} default button "Install"
+EOF
+}
+
+# --------------------------------------------------
+# Download the latest version of the script from GitHub
+# Overwrites the existing file and makes it executable
+# --------------------------------------------------
+download_run_command() {
+    local url="${RAW_BASE_URL}/refs/heads/${BRANCH}/${RUN_FILE}"
+    local tmp="${RUN_FILE}.tmp"
+
+    log "📥 Downloading ${RUN_FILE} from ${REPO_PATH} (${BRANCH})"
+
+    curl -fsSL "${url}" -o "${tmp}"
+    mv "${tmp}" "${RUN_FILE}"
+    chmod +x "${RUN_FILE}"
+
+    log "✅ ${RUN_FILE} updated"
+}
+
+# --------------------------------------------------
+# Check for updates:
+# 1. Skip if curl is missing
+# 2. Skip if latest version matches current
+# 3. Skip if no write permission
+# 4. Prompt user to install if new version is available
+# --------------------------------------------------
+check_for_updates() {
+    # Check if curl exists
+    if ! require_curl; then
+        return 0
+    fi
+
+    log "🔍 Checking for updates..."
+    log "Current version: ${CURRENT_VERSION}"
+
+    local latest_tag
+    latest_tag=$(get_latest_github_tag)
+
+    if [[ -z "${latest_tag}" ]]; then
+        log "⚠️  No GitHub tags found — skipping update"
+        return 0
+    fi
+
+    if [[ "${latest_tag}" == "${CURRENT_VERSION}" ]]; then
+        log "✅ Already up to date"
+        return 0
+    fi
+
+    log "⬆️  New version detected: ${latest_tag}"
+
+    # Check write permission
+    if [[ ! -w "$(pwd)" ]]; then
+        log "⚠️  No write permission in current directory — cannot update"
+        return 0
+    fi
+
+    # Prompt user
+    if mac_confirm_update; then
+        download_run_command
+    else
+        log "ℹ️  Update canceled by user"
+    fi
+}
+
 # -------------------------------------------------------------------
 # Runtime copy for local notebooks
 # -------------------------------------------------------------------
 # By default, make local runtime copies to ~/notebooks/<project>
-# Set WANT_LOCAL_RUNTIME=1 at top of script to enable.
-WANT_LOCAL_RUNTIME=${WANT_LOCAL_RUNTIME:-1}
 
 create_local_runtime() {
     # The name of this script (we already cd'd to script dir earlier)
@@ -434,6 +538,7 @@ log "🚀 Starting Jupyter Notebook App"
 log "📁 Directory: $SCRIPT_DIR"
 log "--------------------------------------------------"
 
+check_for_updates
 create_local_runtime
 install_uv
 determine_python_version
