@@ -1,8 +1,8 @@
-# Jupyter Project Launcher (`run.command`)
+# Jupyter Project Launcher (`launch_jupyter.command`)
 
 ## Motivation
 
-This project includes a **macOS-specific launcher (`run.command`)** designed to make running Jupyter notebooks:
+This project includes a **macOS-specific launcher (`launch_jupyter.command`)** designed to make running Jupyter notebooks:
 
 * **Reliable**
 * **Reproducible**
@@ -17,7 +17,7 @@ Running Python environments directly inside shared directories can easily:
 * Corrupt or silently modify shared notebooks
 * Leave behind stale Jupyter kernels pointing to deleted environments
 
-`run.command` solves this by **creating a local working copy** and running everything from there.
+`launch_jupyter.command` solves this by **creating a local working copy** and running everything from there.
 
 ---
 
@@ -63,12 +63,12 @@ This launcher is intentionally macOS-only.
 
 It relies on:
 
-* `run.command` (Finder-clickable shell script)
+* `launch_jupyter.command` (Finder-clickable shell script)
 * Homebrew (optional system dependencies)
 * `uv` for Python + environment management
 * Standard macOS filesystem layout
 
-Double-clicking `run.command` in Finder is the expected entry point.
+Double-clicking `launch_jupyter.command` in Finder is the expected entry point.
 
 ---
 
@@ -78,7 +78,7 @@ After first run, your local project directory will look like:
 
 ```
 ~/notebooks/<project_name>/
-├── run.command
+├── launch_jupyter.command
 ├── requirements.txt
 ├── brew.txt
 ├── notebook.ipynb
@@ -97,7 +97,7 @@ Only this directory is modified.
 
 ### Required
 
-#### `run.command`
+#### `launch_jupyter.command`
 
 The launcher itself.
 
@@ -168,7 +168,7 @@ If required system dependencies are missing:
   ```
 * A **readable Markdown warning** is injected as the first cell
 * The warning notebook is opened instead of the original
-* Once dependencies are fixed, rerunning `run.command` restores normal behavior
+* Once dependencies are fixed, rerunning `launch_jupyter.command` restores normal behavior
 
 This keeps warnings visible **without corrupting real work**.
 
@@ -176,7 +176,7 @@ This keeps warnings visible **without corrupting real work**.
 
 ## Re-Running Safely
 
-You can rerun `run.command` at any time:
+You can rerun `launch_jupyter.command` at any time:
 
 * Existing Jupyter instances are stopped
 * Kernels are deleted and recreated
@@ -189,7 +189,7 @@ Re-running is encouraged.
 
 ## Summary
 
-**`run.command` exists to make notebooks:**
+**`launch_jupyter.command` exists to make notebooks:**
 
 * Shareable
 * Safe
@@ -217,4 +217,3 @@ All are compatible with this design.
 ---
 
 Happy hacking 🧠🧪
-
