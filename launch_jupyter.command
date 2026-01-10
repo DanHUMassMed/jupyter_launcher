@@ -114,6 +114,9 @@ check_for_updates() {
     # Prompt user
     if mac_confirm_update; then
         download_run_command
+        log "🔄 Relaunching updated script..."
+        open -a Terminal "$PWD/$RUN_FILE"
+        exit 0
     else
         log "ℹ️  Update canceled by user"
     fi
