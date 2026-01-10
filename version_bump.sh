@@ -1,9 +1,11 @@
 #!/bin/bash
 VERSION_FILE="launch_jupyter.command" 
 
-VERSION_LINE=$(grep CURRENT_VERSION $VERSION_FILE)
+VERSION_LINE=$(grep VERSION_LINE $VERSION_FILE)
 
 VERSION=$(echo "$VERSION_LINE" | sed 's/.*CURRENT_VERSION=v\([0-9.]*\).*/\1/')
+
+echo "Current version: $VERSION"
 
 if [ -z "$VERSION" ]; then
   echo "❌ Could not find version in $VERSION_FILE"
@@ -21,10 +23,10 @@ echo "Bumping version: $VERSION → $NEW_VERSION"
 # Detect GNU vs BSD sed
 if sed --version >/dev/null 2>&1; then
   # GNU sed (Ubuntu/Linux)
-  sed -i "s|CURRENT_VERSION=$VERSION|CURRENT_VERSION=$NEW_VERSION|" "$VERSION_FILE"
+  sed -i "s|CURRENT_VERSION=v$VERSION|CURRENT_VERSION=v$NEW_VERSION|" "$VERSION_FILE"
 else
   # BSD sed (macOS)
-  sed -i '' "s|CURRENT_VERSION=$VERSION|CURRENT_VERSION=$NEW_VERSION|" "$VERSION_FILE"
+  sed -i '' "s|CURRENT_VERSION=v$VERSION|CURRENT_VERSION=v$NEW_VERSION|" "$VERSION_FILE"
 fi
 
 # Git commit, tag, and push
