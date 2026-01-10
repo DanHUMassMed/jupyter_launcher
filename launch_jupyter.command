@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-CURRENT_VERSION=v0.1.2 # VERSION_LINE Bumped when a new release is made
+CURRENT_VERSION=v0.1.3 # VERSION_LINE Bumped when a new release is made
 
 # --------------------------------------------------
 # Finder-safe: always run from script directory
