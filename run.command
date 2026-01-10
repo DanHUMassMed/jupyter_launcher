@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+CURRENT_VERSION=v0.1.0
+
 # --------------------------------------------------
 # Finder-safe: always run from script directory
 # --------------------------------------------------
