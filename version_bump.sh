@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION_FILE="run.command" 
+VERSION_FILE="launch_jupyter.command" 
 
 VERSION_LINE=$(grep CURRENT_VERSION $VERSION_FILE)
 
