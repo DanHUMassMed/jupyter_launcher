@@ -1,0 +1,83 @@
+#!/bin/bash
+set -e
+
+# Configuration
+CURRENT_VERSION=v0.1.4 # VERSION_LINE Bumped when a new release is made
+DEFAULT_PY_VERSION="3.13"
+LOG_FILE="log.txt"
+
+REPO_OWNER="DanHUMassMed"
+REPO_NAME="jupyter_launcher"
+REPO_PATH="${REPO_OWNER}/${REPO_NAME}"
+
+GITHUB_API_URL="https://api.github.com/repos/${REPO_PATH}"
+RAW_BASE_URL="https://raw.githubusercontent.com/${REPO_PATH}"
+
+BRANCH="main"
+RUN_FILE="launch_jupyter.command"
+
+# Enable local runtime copy by default
+WANT_LOCAL_RUNTIME=${WANT_LOCAL_RUNTIME:-1}
+THRESHOLD_MB=10
+
+# Initialize Script Directory
+SCRIPT_DIR="$(pwd)"
+
+# Source Libraries
+# Validates that we are running from the project root or can find libs
+if [ -d "lib" ]; then
+    LIB_DIR="lib"
+elif [ -d "../lib" ]; then
+    LIB_DIR="../lib"
+else
+    echo "❌ Critical Error: Could not find library directory."
+    echo "PWD: $(pwd)"
+    exit 1
+fi
+
+source "${LIB_DIR}/log.sh"
+source "${LIB_DIR}/os.sh"
+source "${LIB_DIR}/github.sh"
+source "${LIB_DIR}/python.sh"
+source "${LIB_DIR}/runtime.sh"
+source "${LIB_DIR}/brew.sh"
+source "${LIB_DIR}/notebook.sh"
+
+# Define PID file location (global)
+PID_FILE="$HOME/.jupyter-app.pid"
+
+# ==================================================
+# Main Execution Flow
+# ==================================================
+main() {
+    log "=================================================="
+    log "🚀 Starting Jupyter Notebook App"
+    log "📁 Directory: $SCRIPT_DIR"
+    log "--------------------------------------------------"
+
+    require_mac_os
+    check_for_updates
+    create_local_runtime
+    
+    # Note: create_local_runtime may switch PWD and update SCRIPT_DIR
+    
+    install_uv
+    determine_python_version
+    ensure_python
+    init_uv_project
+    create_venv
+    sync_dependencies
+    ensure_ipykernel
+    
+    find_notebook
+    enforce_single_instance
+    check_brew_dependencies
+    register_kernel
+    update_notebook_metadata
+    
+    launch_jupyter
+    
+    log "=================================================="
+}
+
+main "$@"

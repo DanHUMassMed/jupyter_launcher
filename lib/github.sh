@@ -1,51 +1,3 @@
-#!/bin/bash
-set -euo pipefail
-
-# --------------------------------------------------
-# Logging function
-# Logs messages to console or a log file if LOG_FILE is set
-# --------------------------------------------------
-log() {
-    local msg="$1"
-    if [ -n "${LOG_FILE:-}" ]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - $msg" >> "$LOG_FILE"
-    else
-        echo "$msg"
-    fi
-}
-
-LOG_FILE="log.txt"  # optional: if set, logs are written here
-
-# --------------------------------------------------
-# Configuration
-# --------------------------------------------------
-CURRENT_VERSION="v0.1.0"
-
-REPO_OWNER="DanHUMassMed"
-REPO_NAME="jupyter_launcher"
-REPO_PATH="${REPO_OWNER}/${REPO_NAME}"
-
-GITHUB_API_URL="https://api.github.com/repos/${REPO_PATH}"
-RAW_BASE_URL="https://raw.githubusercontent.com/${REPO_PATH}"
-
-BRANCH="main"
-RUN_FILE="launch_jupyter.command"
-
-# --------------------------------------------------
-# Functions
-# --------------------------------------------------
-
-# --------------------------------------------------
-# Check if curl is installed; returns 1 if missing
-# --------------------------------------------------
-require_curl() {
-    if ! command -v curl >/dev/null 2>&1; then
-        log "⚠️ curl is not installed — skipping update"
-        return 1
-    fi
-    return 0
-}
-
 # --------------------------------------------------
 # Fetch the latest GitHub tag from the repository
 # --------------------------------------------------
@@ -53,16 +5,6 @@ get_latest_github_tag() {
     curl -fs "${GITHUB_API_URL}/tags" \
     | sed -n 's/.*"name":[[:space:]]*"\([^"]*\)".*/\1/p' \
     | head -n 1 || true
-}
-
-# --------------------------------------------------
-# Show a macOS dialog asking user whether to install update
-# Returns button clicked
-# --------------------------------------------------
-mac_confirm_update() {
-    osascript <<EOF
-display dialog "Update Available. Install?" buttons {"Cancel", "Install"} default button "Install"
-EOF
 }
 
 # --------------------------------------------------
@@ -122,12 +64,10 @@ check_for_updates() {
     # Prompt user
     if mac_confirm_update; then
         download_run_command
+        log "🔄 Relaunching updated script..."
+        open -a Terminal "$PWD/$RUN_FILE"
+        exit 0
     else
         log "ℹ️  Update canceled by user"
     fi
 }
-
-# --------------------------------------------------
-# Entry point
-# --------------------------------------------------
-check_for_updates
