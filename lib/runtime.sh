@@ -48,7 +48,7 @@ create_local_runtime() {
     # - brew.txt, requirements.txt
     # - data directory
     # - *.ipynb
-    
+    echo "{\"SOURCE_DIR\":\"$SCRIPT_DIR\"}" > "$TARGET_DIR/source_dir.json"
     cp -Rp "bin" "$TARGET_DIR/" 2>/dev/null || true
     cp -Rp "lib" "$TARGET_DIR/" 2>/dev/null || true
     cp -Rp "python" "$TARGET_DIR/" 2>/dev/null || true

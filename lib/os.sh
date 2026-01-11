@@ -15,7 +15,7 @@ require_curl() {
 # --------------------------------------------------
 mac_confirm_update() {
     osascript <<EOF
-display dialog "Launch Jupyter App Update Available. Install?" buttons {"Cancel", "Install"} default button "Install"
+display dialog "Launch Jupyter App Update Available. Install?" buttons {"Later", "Install"} default button "Install"
 EOF
 }
 

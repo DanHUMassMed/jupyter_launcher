@@ -2,7 +2,7 @@
 set -e
 
 # Configuration
-CURRENT_VERSION=v0.1.5 # VERSION_LINE Bumped when a new release is made
+CURRENT_VERSION=v0.1.4 # VERSION_LINE Bumped when a new release is made
 DEFAULT_PY_VERSION="3.13"
 LOG_FILE="log.txt"
 
@@ -283,7 +283,7 @@ create_local_runtime() {
     # - brew.txt, requirements.txt
     # - data directory
     # - *.ipynb
-    
+    echo "{\"SOURCE_DIR\":\"$SCRIPT_DIR\"}" > "$TARGET_DIR/source_dir.json"
     cp -Rp "bin" "$TARGET_DIR/" 2>/dev/null || true
     cp -Rp "lib" "$TARGET_DIR/" 2>/dev/null || true
     cp -Rp "python" "$TARGET_DIR/" 2>/dev/null || true
