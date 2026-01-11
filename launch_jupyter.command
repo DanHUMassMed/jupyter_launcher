@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-CURRENT_VERSION=v0.1.3 # VERSION_LINE Bumped when a new release is made
+CURRENT_VERSION=v0.1.4 # VERSION_LINE Bumped when a new release is made
 
 # --------------------------------------------------
 # Finder-safe: always run from script directory
@@ -474,6 +474,7 @@ EOPY
 ensure_ipykernel() {
     log "📄 Ensuring ipykernel and nbformat are installed..."
     uv add ipykernel
+    uv add jupyterlab
     uv add nbformat
     uv sync
     log "📄 Added ipykernel and nbformat"
@@ -489,7 +490,7 @@ register_kernel() {
     log "📄 Registering kernel: $KERNEL_NAME"
 
     # If kernel exists, delete it first (stale paths are common)
-    if jupyter kernelspec list | grep -q "^$KERNEL_NAME[[:space:]]"; then
+    if uv run jupyter kernelspec list | grep -q "^$KERNEL_NAME[[:space:]]"; then
         log "♻️ Removing existing kernel: $KERNEL_NAME"
         jupyter kernelspec remove -f "$KERNEL_NAME"
     fi
@@ -542,13 +543,12 @@ launch_jupyter() {
     NEW_PID=$!
     echo "$NEW_PID" > "$PID_FILE"
     log "✅ Jupyter running (PID $NEW_PID)"
-    log "🔁 Re-running this file will replace the running notebook"
 }
 
 # --------------------------------------------------
 # Check if running on macOS; exit if not
 # --------------------------------------------------
-require_macos() {
+require_mac_os() {
     if [[ "$(uname)" != "Darwin" ]]; then
         echo "❌ This script only runs on macOS. Exiting."
         return 1
@@ -564,7 +564,7 @@ log "🚀 Starting Jupyter Notebook App"
 log "📁 Directory: $SCRIPT_DIR"
 log "--------------------------------------------------"
 
-require_macos
+require_mac_os
 check_for_updates
 create_local_runtime
 install_uv
