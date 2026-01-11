@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION_FILE="launch_jupyter.command" 
+VERSION_FILE="launch_jupyter.src" 
 
 VERSION_LINE=$(grep VERSION_LINE $VERSION_FILE)
 

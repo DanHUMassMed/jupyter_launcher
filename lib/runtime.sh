@@ -25,7 +25,6 @@ create_local_runtime() {
     # Project name is the last directory name where the script lives
     # Global SCRIPT_DIR should be set by orchestrator
     PROJECT_NAME=$(basename "$SCRIPT_DIR")
-    TARGET_BASE="$HOME/notebooks"
     TARGET_DIR="$TARGET_BASE/$PROJECT_NAME"
 
     # If the script is already running inside ~/notebooks/<project>, do nothing
@@ -43,14 +42,11 @@ create_local_runtime() {
     }
 
     # Copy project structure
-    # - bin, lib, python directories
     # - launch_jupyter.command wrapper
     # - brew.txt, requirements.txt
     # - data directory
     # - *.ipynb
     echo "{\"SOURCE_DIR\":\"$SCRIPT_DIR\"}" > "$TARGET_DIR/source_dir.json"
-    cp -Rp "bin" "$TARGET_DIR/" 2>/dev/null || true
-    cp -Rp "lib" "$TARGET_DIR/" 2>/dev/null || true
     cp -p "launch_jupyter.command" "$TARGET_DIR/" 2>/dev/null || true
 
     [ -f "brew.txt" ] && cp -p "brew.txt" "$TARGET_DIR/" || true
@@ -92,13 +88,13 @@ EOF
     log "✅ Copied project structure to $TARGET_DIR"
 
     [ -f "log.txt" ] && cp -p "log.txt" "$TARGET_DIR/" || true
-    log "🔁 Switching to runtime directory."
-
+    
     # Now switch script working dir to the runtime directory so the rest of the script operates there
     cd "$TARGET_DIR" || {
         log "❌ Failed to cd into $TARGET_DIR"
         exit 1
     }
+    log "🔁 Switching to runtime directory."
 
     # Update SCRIPT_DIR to the new runtime location so the rest of the script uses it
     SCRIPT_DIR="$(pwd)"

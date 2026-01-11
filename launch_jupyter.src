@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
 
+# ==================================================
 # Configuration
-CURRENT_VERSION=v0.1.4 # VERSION_LINE Bumped when a new release is made
+# ==================================================
+
+CURRENT_VERSION=v0.1.1 # VERSION_LINE Bumped when a new release is made
 DEFAULT_PY_VERSION="3.13"
 LOG_FILE="log.txt"
 
@@ -23,42 +26,35 @@ THRESHOLD_MB=10
 # Initialize Script Directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source Libraries
-# Validates that we are running from the project root or can find libs
-if [ -d "lib" ]; then
-    LIB_DIR="lib"
-elif [ -d "../lib" ]; then
-    LIB_DIR="../lib"
-else
-    echo "❌ Critical Error: Could not find library directory."
-    echo "PWD: $(pwd)"
-    exit 1
-fi
-
-source "${LIB_DIR}/log.sh"
-source "${LIB_DIR}/os.sh"
-source "${LIB_DIR}/github.sh"
-source "${LIB_DIR}/python.sh"
-source "${LIB_DIR}/runtime.sh"
-source "${LIB_DIR}/brew.sh"
-source "${LIB_DIR}/notebook.sh"
+TARGET_BASE="$HOME/notebooks"
 
 # Define PID file location (global)
 PID_FILE="$HOME/.jupyter-app.pid"
 
 # ==================================================
+# End Configuration
+# ==================================================
+
+# ==================================================
+# Injected library functions
+# End Library Functions
+# ==================================================
+
+# ==================================================
 # Main Execution Flow
 # ==================================================
 main() {
+    cd "$SCRIPT_DIR" || {
+        log "❌ Failed to cd into $SCRIPT_DIR"
+        exit 1
+    }
+
+    reset_log
     log "=================================================="
     log "🚀 Starting Jupyter Notebook App"
     log "📁 Directory: $SCRIPT_DIR"
     log "--------------------------------------------------"
 
-    cd "$SCRIPT_DIR" || {
-        log "❌ Failed to cd into $SCRIPT_DIR"
-        exit 1
-    }
     require_mac_os
     check_for_updates
     create_local_runtime

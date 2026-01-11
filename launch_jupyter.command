@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
 
+# ==================================================
 # Configuration
-CURRENT_VERSION=v0.1.5 # VERSION_LINE Bumped when a new release is made
+# ==================================================
+
+CURRENT_VERSION=v0.1.1 # VERSION_LINE Bumped when a new release is made
 DEFAULT_PY_VERSION="3.13"
 LOG_FILE="log.txt"
 
@@ -23,12 +26,18 @@ THRESHOLD_MB=10
 # Initialize Script Directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+TARGET_BASE="$HOME/notebooks"
+
+# Define PID file location (global)
+PID_FILE="$HOME/.jupyter-app.pid"
+
+# ==================================================
 
 # ==================================================
 # EMBEDDED LIBRARIES
 # ==================================================
 
-# --- START log.sh ---
+# *** START log.sh ***
 # --------------------------------------------------
 # Logging function
 # --------------------------------------------------
@@ -41,9 +50,20 @@ log() {
     fi
 }
 
-# --- END log.sh ---
+# --------------------------------------------------
+# Initialize / reset log
+# --------------------------------------------------
+reset_log() {
+    # If no log file is configured, do nothing
+    [ -z "$LOG_FILE" ] && return 0
 
-# --- START os.sh ---
+    mkdir -p "$(dirname "$LOG_FILE")"
+    : > "$LOG_FILE"
+}
+
+# *** END log.sh ***
+
+# *** START os.sh ***
 # --------------------------------------------------
 # Check if curl is installed; returns 1 if missing
 # --------------------------------------------------
@@ -76,9 +96,9 @@ require_mac_os() {
     return 0
 }
 
-# --- END os.sh ---
+# *** END os.sh ***
 
-# --- START github.sh ---
+# *** START github.sh ***
 # --------------------------------------------------
 # Fetch the latest GitHub tag from the repository
 # --------------------------------------------------
@@ -153,9 +173,9 @@ check_for_updates() {
     fi
 }
 
-# --- END github.sh ---
+# *** END github.sh ***
 
-# --- START python.sh ---
+# *** START python.sh ***
 # --------------------------------------------------
 # Ensure 'uv' is installed
 # --------------------------------------------------
@@ -230,9 +250,9 @@ ensure_ipykernel() {
     log "📄 Added ipykernel and nbformat"
 }
 
-# --- END python.sh ---
+# *** END python.sh ***
 
-# --- START runtime.sh ---
+# *** START runtime.sh ***
 # --------------------------------------------------
 # Enforce single running instance
 # --------------------------------------------------
@@ -260,7 +280,6 @@ create_local_runtime() {
     # Project name is the last directory name where the script lives
     # Global SCRIPT_DIR should be set by orchestrator
     PROJECT_NAME=$(basename "$SCRIPT_DIR")
-    TARGET_BASE="$HOME/notebooks"
     TARGET_DIR="$TARGET_BASE/$PROJECT_NAME"
 
     # If the script is already running inside ~/notebooks/<project>, do nothing
@@ -278,14 +297,11 @@ create_local_runtime() {
     }
 
     # Copy project structure
-    # - bin, lib, python directories
     # - launch_jupyter.command wrapper
     # - brew.txt, requirements.txt
     # - data directory
     # - *.ipynb
     echo "{\"SOURCE_DIR\":\"$SCRIPT_DIR\"}" > "$TARGET_DIR/source_dir.json"
-    cp -Rp "bin" "$TARGET_DIR/" 2>/dev/null || true
-    cp -Rp "lib" "$TARGET_DIR/" 2>/dev/null || true
     cp -p "launch_jupyter.command" "$TARGET_DIR/" 2>/dev/null || true
 
     [ -f "brew.txt" ] && cp -p "brew.txt" "$TARGET_DIR/" || true
@@ -327,22 +343,22 @@ EOF
     log "✅ Copied project structure to $TARGET_DIR"
 
     [ -f "log.txt" ] && cp -p "log.txt" "$TARGET_DIR/" || true
-    log "🔁 Switching to runtime directory."
-
+    
     # Now switch script working dir to the runtime directory so the rest of the script operates there
     cd "$TARGET_DIR" || {
         log "❌ Failed to cd into $TARGET_DIR"
         exit 1
     }
+    log "🔁 Switching to runtime directory."
 
     # Update SCRIPT_DIR to the new runtime location so the rest of the script uses it
     SCRIPT_DIR="$(pwd)"
     log "📂 Now operating in $SCRIPT_DIR"
 }
 
-# --- END runtime.sh ---
+# *** END runtime.sh ***
 
-# --- START brew.sh ---
+# *** START brew.sh ***
 # --------------------------------------------------
 # Check Brew dependencies, generate warning notebook if needed
 # --------------------------------------------------
@@ -426,8 +442,9 @@ check_brew_dependencies() {
     fi
 }
 
-# =============================================================================================
-# =============================== PYTHON SCRIPTS ===============================================
+# --------------------------------------------------
+# PYTHON SCRIPTS
+# --------------------------------------------------
 
 write_inject_warning_script() {
   local target="$1"
@@ -464,9 +481,9 @@ else:
     nbformat.write(nb, notebook_file)
 PYCODE
 }
-# --- END brew.sh ---
+# *** END brew.sh ***
 
-# --- START notebook.sh ---
+# *** START notebook.sh ***
 # --------------------------------------------------
 # Find first notebook (ignore *_warning.ipynb)
 # Create one if none exists
@@ -537,8 +554,9 @@ launch_jupyter() {
     echo "$NEW_PID" > "$PID_FILE"
     log "✅ Jupyter running (PID $NEW_PID)"
 }
-# ==============================================================================================
-# =============================== PYTHON SCRIPTS ===============================================
+# --------------------------------------------------
+# PYTHON SCRIPTS
+# --------------------------------------------------
 
 write_create_notebook_script() {
   local target="$1"
@@ -605,28 +623,23 @@ with open(nb_file, "w", encoding="utf-8") as f:
 PYCODE
 }
 
-# --- END notebook.sh ---
-
-# ==================================================
-# MAIN EXECUTION
-# ==================================================
-
-# Define PID file location (global)
-PID_FILE="$HOME/.jupyter-app.pid"
+# *** END notebook.sh ***
 
 # ==================================================
 # Main Execution Flow
 # ==================================================
 main() {
+    cd "$SCRIPT_DIR" || {
+        log "❌ Failed to cd into $SCRIPT_DIR"
+        exit 1
+    }
+
+    reset_log
     log "=================================================="
     log "🚀 Starting Jupyter Notebook App"
     log "📁 Directory: $SCRIPT_DIR"
     log "--------------------------------------------------"
 
-    cd "$SCRIPT_DIR" || {
-        log "❌ Failed to cd into $SCRIPT_DIR"
-        exit 1
-    }
     require_mac_os
     check_for_updates
     create_local_runtime
