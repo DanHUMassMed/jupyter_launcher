@@ -110,6 +110,16 @@ The launcher itself.
 
 ### Optional but Recommended
 
+#### `version.txt`
+
+Python version.
+
+Example:
+
+```
+python=3.13
+```
+
 #### `requirements.txt`
 
 Python dependencies.
