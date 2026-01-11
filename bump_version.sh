@@ -29,10 +29,4 @@ else
   sed -i '' "s|CURRENT_VERSION=v$VERSION|CURRENT_VERSION=v$NEW_VERSION|" "$VERSION_FILE"
 fi
 
-# Git commit, tag, and push
-git add "$VERSION_FILE"
-git commit -m "Bump version to $NEW_VERSION"
-git tag "v$NEW_VERSION"
-git push
-git push --tags
 
