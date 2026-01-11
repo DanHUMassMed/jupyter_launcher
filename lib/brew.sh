@@ -67,6 +67,8 @@ check_brew_dependencies() {
         NOTEBOOK="$NOTEBOOK_WARNING"
 
         # Call python script
+        INJECT_WARNING_FILE="inject_warning.py"
+        write_inject_warning_script "$INJECT_WARNING_FILE"
         uv run python "$INJECT_WARNING_FILE" "$NOTEBOOK" "$WARNING_FILE"
         rm -f "$INJECT_WARNING_FILE"
 
@@ -79,11 +81,12 @@ check_brew_dependencies() {
     fi
 }
 
-==============================================================================================
-=============================== PYTHON SCRIPTS ===============================================
+# =============================================================================================
+# =============================== PYTHON SCRIPTS ===============================================
 
-INJECT_WARNING_FILE="inject_warning.py"
-cat > "$INJECT_WARNING_FILE" <<EOPY
+write_inject_warning_script() {
+  local target="$1"
+  cat > "$target" <<'PYCODE'
 import sys
 import nbformat
 from pathlib import Path
@@ -114,4 +117,5 @@ else:
 
     # Save notebook
     nbformat.write(nb, notebook_file)
-EOPY
+PYCODE
+}

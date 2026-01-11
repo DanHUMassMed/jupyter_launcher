@@ -11,6 +11,8 @@ find_notebook() {
 
         log "📓 No notebook found — creating ${NOTEBOOK}..."
 
+        CREATE_NOTEBOOK_FILE="create_notebook.py"
+        write_create_notebook_script "$CREATE_NOTEBOOK_FILE"
         uv run python "$CREATE_NOTEBOOK_FILE" "$PROJECT_NAME" "$NOTEBOOK"
         rm -f "$CREATE_NOTEBOOK_FILE"
 
@@ -49,6 +51,8 @@ register_kernel() {
 # Update notebook metadata
 # --------------------------------------------------
 update_notebook_metadata() {
+    UPDATE_METADATA_FILE="update_metadata.py"
+    write_update_metadata_script "$UPDATE_METADATA_FILE"
     uv run python "$UPDATE_METADATA_FILE" "$NOTEBOOK" "$KERNEL_NAME" "$KERNEL_DISPLAY"
     rm -f "$UPDATE_METADATA_FILE"   
 }
@@ -64,11 +68,12 @@ launch_jupyter() {
     echo "$NEW_PID" > "$PID_FILE"
     log "✅ Jupyter running (PID $NEW_PID)"
 }
-==============================================================================================
-=============================== PYTHON SCRIPTS ===============================================
+# ==============================================================================================
+# =============================== PYTHON SCRIPTS ===============================================
 
-CREATE_NOTEBOOK_FILE="create_notebook.py"
-cat > "$CREATE_NOTEBOOK_FILE" <<EOPY
+write_create_notebook_script() {
+  local target="$1"
+  cat > "$target" <<'PYCODE'
 import sys
 import nbformat
 
@@ -99,10 +104,12 @@ nb = nbformat.v4.new_notebook(
 with open(notebook_filename, "w", encoding="utf-8") as f:
     nbformat.write(nb, f)
 print(f"Created {notebook_filename}")
-EOPY
+PYCODE
+}
 
-UPDATE_METADATA_FILE="update_metadata.py"
-cat > "$UPDATE_METADATA_FILE" <<EOPY
+write_update_metadata_script() {
+  local target="$1"
+  cat > "$target" <<'PYCODE'
 import sys
 import json
 
@@ -125,4 +132,6 @@ nb['metadata']['kernelspec'] = {
 
 with open(nb_file, "w", encoding="utf-8") as f:
     json.dump(nb, f, indent=2)
-EOPY
+
+PYCODE
+}
