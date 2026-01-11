@@ -2,19 +2,34 @@
 # Enforce single running instance
 # --------------------------------------------------
 enforce_single_instance() {
-    log "Checking for previous Jupyter instance..."
+    log "🔍 Checking for previous Jupyter instance..."
     if [ -f "$PID_FILE" ]; then
         OLD_PID=$(cat "$PID_FILE")
         if ps -p "$OLD_PID" > /dev/null 2>&1; then
-            if ps -p "$OLD_PID" -o comm= | grep -qi jupyter; then
+            CMD=$(ps -p "$OLD_PID" -o args=)
+            if echo "$CMD" | grep -qi jupyter; then
                 log "🛑 Stopping previous Jupyter (PID $OLD_PID)..."
-                kill "$OLD_PID" || true
-                sleep 2
+                kill "$OLD_PID" 2>/dev/null || true
+
+                # Wait up to 5 seconds for process to die
+                for i in {1..10}; do
+                    if ! ps -p "$OLD_PID" >/dev/null 2>&1; then
+                        break
+                    fi
+                    sleep 0.5
+                done
+
+                # Force kill if still alive
+                if ps -p "$OLD_PID" >/dev/null 2>&1; then
+                    log "⚠️ Process still running, killing forcefully..."
+                    kill -9 "$OLD_PID" 2>/dev/null || true
+                fi
             fi
         fi
         rm -f "$PID_FILE"
     fi
 }
+
 
 # -------------------------------------------------------------------
 # Runtime copy for local notebooks

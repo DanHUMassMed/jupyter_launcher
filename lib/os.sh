@@ -29,3 +29,15 @@ require_mac_os() {
     fi
     return 0
 }
+
+pick_free_port() {
+    for port in $(seq 8000 9000); do
+        # try to connect to see if port is in use
+        (echo >/dev/tcp/127.0.0.1/$port) >/dev/null 2>&1 || {
+            echo "$port"
+            return 0
+        }
+    done
+    echo "No free ports in range 8000–9000" >&2
+    return 1
+}

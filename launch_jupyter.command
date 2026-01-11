@@ -96,6 +96,18 @@ require_mac_os() {
     return 0
 }
 
+pick_free_port() {
+    for port in $(seq 8000 9000); do
+        # try to connect to see if port is in use
+        (echo >/dev/tcp/127.0.0.1/$port) >/dev/null 2>&1 || {
+            echo "$port"
+            return 0
+        }
+    done
+    echo "No free ports in range 8000–9000" >&2
+    return 1
+}
+
 # *** END os.sh ***
 
 # *** START github.sh ***
@@ -257,19 +269,34 @@ ensure_ipykernel() {
 # Enforce single running instance
 # --------------------------------------------------
 enforce_single_instance() {
-    log "Checking for previous Jupyter instance..."
+    log "🔍 Checking for previous Jupyter instance..."
     if [ -f "$PID_FILE" ]; then
         OLD_PID=$(cat "$PID_FILE")
         if ps -p "$OLD_PID" > /dev/null 2>&1; then
-            if ps -p "$OLD_PID" -o comm= | grep -qi jupyter; then
+            CMD=$(ps -p "$OLD_PID" -o args=)
+            if echo "$CMD" | grep -qi jupyter; then
                 log "🛑 Stopping previous Jupyter (PID $OLD_PID)..."
-                kill "$OLD_PID" || true
-                sleep 2
+                kill "$OLD_PID" 2>/dev/null || true
+
+                # Wait up to 5 seconds for process to die
+                for i in {1..10}; do
+                    if ! ps -p "$OLD_PID" >/dev/null 2>&1; then
+                        break
+                    fi
+                    sleep 0.5
+                done
+
+                # Force kill if still alive
+                if ps -p "$OLD_PID" >/dev/null 2>&1; then
+                    log "⚠️ Process still running, killing forcefully..."
+                    kill -9 "$OLD_PID" 2>/dev/null || true
+                fi
             fi
         fi
         rm -f "$PID_FILE"
     fi
 }
+
 
 # -------------------------------------------------------------------
 # Runtime copy for local notebooks
@@ -521,6 +548,7 @@ register_kernel() {
     if uv run jupyter kernelspec list | grep -q "^$KERNEL_NAME[[:space:]]"; then
         log "♻️ Removing existing kernel: $KERNEL_NAME"
         jupyter kernelspec remove -f "$KERNEL_NAME"
+        sleep 1
     fi
 
     # Recreate kernel pointing to current .venv
@@ -548,12 +576,58 @@ update_notebook_metadata() {
 # --------------------------------------------------
 launch_jupyter() {
     export JUPYTER_DISABLE_CONFIG=1
+
     log "🌐 Launching Jupyter Lab..."
-    nohup uv run jupyter lab "$NOTEBOOK" >/dev/null 2>&1 &
+
+    PORT=$(pick_free_port)
+    JUPYTER_LOG="$TARGET_DIR/jupyter.log"
+
+    nohup uv run jupyter lab "$NOTEBOOK" \
+        --ServerApp.open_browser=False \
+        --ServerApp.allow_remote_access=True \
+        --ServerApp.root_dir="$TARGET_DIR" \
+        --ServerApp.port="$PORT" \
+        > "$JUPYTER_LOG" 2>&1 &
+
     NEW_PID=$!
     echo "$NEW_PID" > "$PID_FILE"
-    log "✅ Jupyter running (PID $NEW_PID)"
+
+    # Wait for server
+    for i in {1..20}; do
+        grep -q "http://127.0.0.1:$PORT" "$JUPYTER_LOG" && break
+        sleep 0.3
+    done
+
+    JUPYTER_URL=$(grep -oE "http://127\.0\.0\.1:$PORT/lab\?token=[a-z0-9]+" "$JUPYTER_LOG" | head -n 1)
+
+    if [ -n "$JUPYTER_URL" ]; then
+        log "🔗 Notebook URL: $JUPYTER_URL"
+        echo "$JUPYTER_URL" > "$TARGET_DIR/jupyter_url.txt"
+    else
+        log "⚠️ Failed to detect Jupyter URL (check $JUPYTER_LOG)"
+    fi
 }
+
+# --------------------------------------------------
+# Open Jupyter Lab in browser (macOS only)
+# --------------------------------------------------
+open_jupyter() {
+    URL_FILE="$TARGET_DIR/jupyter_url.txt"
+
+    if [ -f "$URL_FILE" ]; then
+        JUPYTER_URL=$(<"$URL_FILE")
+        if [ -n "$JUPYTER_URL" ]; then
+            log "🌐 Opening Jupyter Lab at $JUPYTER_URL"
+            open "$JUPYTER_URL"
+            return 0
+        fi
+    fi
+
+    # If we reach here, something went wrong
+    log "❌ Jupyter URL not found. Did the server start correctly?"
+    osascript -e 'display notification "Failed to detect Jupyter URL. Check logs." with title "Jupyter Launcher"'
+}
+
 # --------------------------------------------------
 # PYTHON SCRIPTS
 # --------------------------------------------------
@@ -641,6 +715,7 @@ main() {
     log "--------------------------------------------------"
 
     require_mac_os
+    #read -p "Press Enter to continue...1" _ </dev/tty
     check_for_updates
     create_local_runtime
     
@@ -661,6 +736,7 @@ main() {
     update_notebook_metadata
     
     launch_jupyter
+    open_jupyter
     
     log "=================================================="
 }
