@@ -21,7 +21,7 @@ WANT_LOCAL_RUNTIME=${WANT_LOCAL_RUNTIME:-1}
 THRESHOLD_MB=10
 
 # Initialize Script Directory
-SCRIPT_DIR="$(pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source Libraries
 # Validates that we are running from the project root or can find libs
@@ -55,6 +55,10 @@ main() {
     log "📁 Directory: $SCRIPT_DIR"
     log "--------------------------------------------------"
 
+    cd "$SCRIPT_DIR" || {
+        log "❌ Failed to cd into $SCRIPT_DIR"
+        exit 1
+    }
     require_mac_os
     check_for_updates
     create_local_runtime

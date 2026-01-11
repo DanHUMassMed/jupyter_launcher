@@ -2,7 +2,7 @@
 set -e
 
 # Configuration
-CURRENT_VERSION=v0.1.5 # VERSION_LINE Bumped when a new release is made
+CURRENT_VERSION=v0.1.1 # VERSION_LINE Bumped when a new release is made
 DEFAULT_PY_VERSION="3.13"
 LOG_FILE="log.txt"
 
@@ -21,7 +21,7 @@ WANT_LOCAL_RUNTIME=${WANT_LOCAL_RUNTIME:-1}
 THRESHOLD_MB=10
 
 # Initialize Script Directory
-SCRIPT_DIR="$(pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 
 # ==================================================
@@ -286,7 +286,6 @@ create_local_runtime() {
     echo "{\"SOURCE_DIR\":\"$SCRIPT_DIR\"}" > "$TARGET_DIR/source_dir.json"
     cp -Rp "bin" "$TARGET_DIR/" 2>/dev/null || true
     cp -Rp "lib" "$TARGET_DIR/" 2>/dev/null || true
-    cp -Rp "python" "$TARGET_DIR/" 2>/dev/null || true
     cp -p "launch_jupyter.command" "$TARGET_DIR/" 2>/dev/null || true
 
     [ -f "brew.txt" ] && cp -p "brew.txt" "$TARGET_DIR/" || true
@@ -624,6 +623,10 @@ main() {
     log "📁 Directory: $SCRIPT_DIR"
     log "--------------------------------------------------"
 
+    cd "$SCRIPT_DIR" || {
+        log "❌ Failed to cd into $SCRIPT_DIR"
+        exit 1
+    }
     require_mac_os
     check_for_updates
     create_local_runtime

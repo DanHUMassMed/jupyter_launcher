@@ -51,7 +51,6 @@ create_local_runtime() {
     echo "{\"SOURCE_DIR\":\"$SCRIPT_DIR\"}" > "$TARGET_DIR/source_dir.json"
     cp -Rp "bin" "$TARGET_DIR/" 2>/dev/null || true
     cp -Rp "lib" "$TARGET_DIR/" 2>/dev/null || true
-    cp -Rp "python" "$TARGET_DIR/" 2>/dev/null || true
     cp -p "launch_jupyter.command" "$TARGET_DIR/" 2>/dev/null || true
 
     [ -f "brew.txt" ] && cp -p "brew.txt" "$TARGET_DIR/" || true
