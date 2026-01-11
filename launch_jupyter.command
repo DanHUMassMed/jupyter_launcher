@@ -2,7 +2,7 @@
 set -e
 
 # Configuration
-CURRENT_VERSION=v0.1.4 # VERSION_LINE Bumped when a new release is made
+CURRENT_VERSION=v0.1.5 # VERSION_LINE Bumped when a new release is made
 DEFAULT_PY_VERSION="3.13"
 LOG_FILE="log.txt"
 
@@ -61,7 +61,7 @@ require_curl() {
 # --------------------------------------------------
 mac_confirm_update() {
     osascript <<EOF
-display dialog "Launch Jupyter App Update Available. Install?" buttons {"Cancel", "Install"} default button "Install"
+display dialog "Launch Jupyter App Update Available. Install?" buttons {"Later", "Install"} default button "Install"
 EOF
 }
 
