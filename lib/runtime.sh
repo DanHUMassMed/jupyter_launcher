@@ -50,6 +50,9 @@ create_local_runtime() {
 
     log "📁 Creating local runtime directory: $TARGET_DIR"
 
+    # Backup if it already exists
+    backup_dir_if_exists "$TARGET_DIR" || return 1
+
     # Create target directory
     mkdir -p "$TARGET_DIR" || {
         log "❌ Failed to create target runtime directory: $TARGET_DIR"
@@ -115,3 +118,5 @@ EOF
     SCRIPT_DIR="$(pwd)"
     log "📂 Now operating in $SCRIPT_DIR"
 }
+
+

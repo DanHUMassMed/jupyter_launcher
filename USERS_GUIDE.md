@@ -122,14 +122,111 @@ nutrap_dir = SOURCE_PATH.parents[1]
 ```
 
 ---
+---
 
-### **⚙️ Best Practices for Notebook Development**
+## **📂 The `data/` Directory (Portable Data for Notebooks)**
 
-* **Never hardcode paths** to Dropbox; always use `source_dir.json` 📄
+Developers may include a **`data/`** directory next to their notebook.
+
+If it exists, `launch_jupyter.command` will:
+
+* **Copy the entire `data/` folder** into the user’s local runtime directory
+* Preserve its structure and contents
+* Make it available to the notebook via **relative paths**
+
+Example project layout:
+
+```
+MyProject/
+├── notebook.ipynb
+├── requirements.txt
+├── brew.txt
+├── version.txt
+└── data/
+    ├── counts.csv
+    ├── metadata.tsv
+    └── images/
+```
+
+On the user’s machine this becomes:
+
+```
+~/notebooks/MyProject/
+├── notebook.ipynb
+└── data/
+    ├── counts.csv
+    ├── metadata.tsv
+    └── images/
+```
+
+Your notebook can now load files simply with:
+
+```python
+from pathlib import Path
+
+DATA = Path("data")
+
+counts = DATA / "counts.csv"
+metadata = DATA / "metadata.tsv"
+```
+
+No absolute paths.
+No Dropbox paths.
+No configuration files.
+
+Just portable, relative access.
+
+---
+
+## **⚠️ Important: Data Is Copied**
+
+The `data/` directory is **copied**, not linked.
+
+This makes notebooks:
+
+* Fully self-contained
+* Portable across machines
+* Safe to modify without touching shared storage
+
+But it also means:
+
+> **Do NOT put large datasets in `data/`.**
+
+Good candidates for `data/`:
+
+* Example datasets
+* Small reference tables
+* Test FASTQ files
+* Example images
+* Gene lists
+* Metadata
+
+Bad candidates:
+
+* Raw sequencing runs
+* Multi-GB imaging data
+* Large HDF5 matrices
+* Anything you wouldn’t want duplicated per user
+
+For large datasets, use `source_dir.json` storage and load them dynamically inside the notebook.
+
+---
+
+## **🧠 Best Practices for Developers**
+
+* Use `data/` for **small, shareable, reproducible datasets** 📁
+* Always access files using **relative paths** (`Path("data") / "file.csv"`)
+* Never hardcode absolute paths 🧯
+* Assume every user gets their **own private copy** of `data/`
+* Test locally by running `launch_jupyter.command` before sharing 🧪
 * Include all dependencies in `requirements.txt` and `brew.txt` ✅
 * Original notebooks remain in shared folders
-* Test notebooks locally using `launch_jupyter.command` before sharing 🧪
 * Update `version.txt` if your notebook requires a specific Python version 🐍
+
+This model keeps your notebooks:
+
+**Portable · Safe · Predictable · Easy for non-technical users**
+
 
 ---
 

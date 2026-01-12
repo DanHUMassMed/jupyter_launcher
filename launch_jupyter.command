@@ -108,6 +108,47 @@ pick_free_port() {
     return 1
 }
 
+# --------------------------------------------------
+# Find next available versioned backup name
+# e.g. mydir -> mydir_v1, mydir_v2, ...
+# --------------------------------------------------
+next_backup_name() {
+    local base="$1"
+    local n=1
+    local candidate
+
+    while :; do
+        candidate="${base}_v${n}"
+        if [ ! -e "$candidate" ]; then
+            echo "$candidate"
+            return 0
+        fi
+        n=$((n + 1))
+    done
+}
+
+# --------------------------------------------------
+# Backup directory if it exists
+# --------------------------------------------------
+backup_dir_if_exists() {
+    local dir="$1"
+
+    if [ ! -d "$dir" ]; then
+        return 0
+    fi
+
+    local backup
+    backup="$(next_backup_name "$dir")"
+
+    log "📦 Backing up existing directory:"
+    log "   $dir  →  $backup"
+
+    mv "$dir" "$backup" || {
+        log "❌ Failed to move $dir to $backup"
+        return 1
+    }
+}
+
 # *** END os.sh ***
 
 # *** START github.sh ***
@@ -317,6 +358,9 @@ create_local_runtime() {
 
     log "📁 Creating local runtime directory: $TARGET_DIR"
 
+    # Backup if it already exists
+    backup_dir_if_exists "$TARGET_DIR" || return 1
+
     # Create target directory
     mkdir -p "$TARGET_DIR" || {
         log "❌ Failed to create target runtime directory: $TARGET_DIR"
@@ -382,6 +426,8 @@ EOF
     SCRIPT_DIR="$(pwd)"
     log "📂 Now operating in $SCRIPT_DIR"
 }
+
+
 
 # *** END runtime.sh ***
 

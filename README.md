@@ -86,6 +86,7 @@ After first run, your local project directory will look like:
 ├── pyproject.toml
 ├── .venv/
 ├── .ipynb_checkpoints/
+├── data/                    (optional)
 └── log.txt                  (optional)
 ```
 
@@ -109,6 +110,13 @@ The launcher itself.
 ---
 
 ### Optional but Recommended
+
+#### Data Directory
+`data/` (optional)
+
+This folder is where all local datasets live when the notebook is configured to use local data.
+
+This allows notebooks to safely use mutable datasets without touching shared or Dropbox folders.
 
 #### `version.txt`
 

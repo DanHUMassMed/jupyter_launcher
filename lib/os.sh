@@ -41,3 +41,44 @@ pick_free_port() {
     echo "No free ports in range 8000–9000" >&2
     return 1
 }
+
+# --------------------------------------------------
+# Find next available versioned backup name
+# e.g. mydir -> mydir_v1, mydir_v2, ...
+# --------------------------------------------------
+next_backup_name() {
+    local base="$1"
+    local n=1
+    local candidate
+
+    while :; do
+        candidate="${base}_v${n}"
+        if [ ! -e "$candidate" ]; then
+            echo "$candidate"
+            return 0
+        fi
+        n=$((n + 1))
+    done
+}
+
+# --------------------------------------------------
+# Backup directory if it exists
+# --------------------------------------------------
+backup_dir_if_exists() {
+    local dir="$1"
+
+    if [ ! -d "$dir" ]; then
+        return 0
+    fi
+
+    local backup
+    backup="$(next_backup_name "$dir")"
+
+    log "📦 Backing up existing directory:"
+    log "   $dir  →  $backup"
+
+    mv "$dir" "$backup" || {
+        log "❌ Failed to move $dir to $backup"
+        return 1
+    }
+}
